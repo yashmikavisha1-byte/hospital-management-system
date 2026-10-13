@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      VITE_API_URL: https://cases-ministries-inexpensive-handhelds.trycloudflare.com/api
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,10 +28,21 @@ jobs:
           cache-dependency-path: client/package-lock.json
       - run: npm ci
         working-directory: client
+      - name: Validate API URL
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "::error::VITE_API_URL is empty."
+            exit 1
+          fi
+          case "$VITE_API_URL" in
+            https://*/api) ;;
+            *)
+              echo "::error::VITE_API_URL must be an HTTPS URL ending in /api."
+              exit 1
+              ;;
+          esac
       - run: npm run build
         working-directory: client
-        env:
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: client/dist

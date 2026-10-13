@@ -6,9 +6,20 @@ const { connectDatabase } = require("./db");
 const User = require("./models/User");
 
 const app = express();
+
+// Allowed websites: any localhost port, plus the addresses in CLIENT_URL
+const allowed = (process.env.CLIENT_URL || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL ? process.env.CLIENT_URL.split(",") : true,
+    origin: (origin, cb) => {
+      if (!origin || /^http:\/\/localhost:\d+$/.test(origin) || allowed.includes(origin))
+        return cb(null, true);
+      cb(new Error("Not allowed by CORS"));
+    },
   })
 );
 app.use(express.json());
