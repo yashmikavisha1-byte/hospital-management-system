@@ -4,6 +4,10 @@ const { MongoMemoryServer } = require("mongodb-memory-server");
 let memoryServer;
 
 async function connectDatabase() {
+  if (process.env.NODE_ENV === "production" && !process.env.MONGO_URI) {
+    throw new Error("MONGO_URI must be configured in production");
+  }
+
   const uri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/hospital";
 
   try {
@@ -17,7 +21,7 @@ async function connectDatabase() {
         error.name === "MongoNetworkError" ||
         /ENOTFOUND|ECONNREFUSED/i.test(error.message));
 
-    if (!shouldFallback) throw error;
+    if (!shouldFallback || process.env.NODE_ENV === "production") throw error;
 
     memoryServer = await MongoMemoryServer.create();
     await mongoose.connect(memoryServer.getUri());

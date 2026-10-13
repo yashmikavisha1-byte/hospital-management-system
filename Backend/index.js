@@ -7,6 +7,8 @@ const User = require("./models/User");
 
 const app = express();
 
+app.get("/health", (_req, res) => res.json({ status: "ok" }));
+
 // Allowed websites: any localhost port, plus the addresses in CLIENT_URL
 const allowed = (process.env.CLIENT_URL || "")
   .split(",")
@@ -49,14 +51,22 @@ async function ensureAdmin() {
   console.log("Admin account created");
 }
 
-connectDatabase()
-  .then(async () => {
-    await ensureAdmin();
-    app.listen(process.env.PORT || 5000, () =>
-      console.log(`Server running on port ${process.env.PORT || 5000}`)
-    );
-  })
-  .catch((err) => {
-    console.error("Database connection failed:", err);
-    process.exit(1);
-  });
+async function initialize() {
+  await connectDatabase();
+  await ensureAdmin();
+}
+
+if (require.main === module) {
+  initialize()
+    .then(() => {
+      app.listen(process.env.PORT || 5000, () =>
+        console.log(`Server running on port ${process.env.PORT || 5000}`)
+      );
+    })
+    .catch((err) => {
+      console.error("Database connection failed:", err);
+      process.exit(1);
+    });
+}
+
+module.exports = { app, initialize };

@@ -18,7 +18,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      VITE_API_URL: https://cases-ministries-inexpensive-handhelds.trycloudflare.com/api
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
