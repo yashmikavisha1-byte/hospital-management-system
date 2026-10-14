@@ -1,4 +1,4 @@
-const { app, initialize } = require("../index");
+const { app, initialize } = require("../app");
 
 let initialization;
 
