@@ -24,8 +24,9 @@ password and review your hosting plan's network-security options.
 
 In Vercel, import this GitHub repository as a new project. Set **Root
 Directory** to `Backend`, enable **Include files outside the root directory**
-if Vercel offers that option, and use Node.js 22.x. The `api/index.js`
-serverless entry point and `vercel.json` route requests to the Express API.
+if Vercel offers that option, and use Node.js 22.x. `vercel.json` explicitly
+builds only `api/index.js` as a serverless function and routes requests to it,
+so application modules such as `app.js` are not treated as functions.
 
 Add these environment variables in the Vercel project settings for Production:
 
@@ -44,13 +45,17 @@ the project, then test `https://<your-vercel-domain>/health`; it should return
 ## 3. Connect the GitHub Pages frontend
 
 Set a GitHub Actions repository variable named `VITE_API_URL` to the Vercel
-domain followed by `/api`, for example:
+project domain shown in Vercel followed by `/api`. For the current project,
+use:
 
 ```text
-https://your-project.vercel.app/api
+https://hospital-management-system-puce-psi.vercel.app/api
 ```
 
 In GitHub, open **Settings → Secrets and variables → Actions → Variables**,
 add `VITE_API_URL`, then run the **Deploy to GitHub Pages** workflow (or push
-to `main`). The frontend build validates that this is an HTTPS URL ending in
-`/api`.
+to `main`). The workflow accepts the HTTPS backend origin with or without the
+`/api` suffix, normalizes it, and passes the resulting API URL to the frontend
+build. Confirm `https://hospital-management-system-puce-psi.vercel.app/health`
+returns `{"status":"ok"}` before expecting API requests to succeed; the Vercel
+deployment must have its Production environment variables configured.
