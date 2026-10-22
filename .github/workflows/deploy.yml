@@ -47,8 +47,12 @@ jobs:
           echo "VITE_API_URL=$VITE_API_URL" >> "$GITHUB_ENV"
       - name: Validate Google OAuth client ID
         run: |
+          if [ -z "$VITE_GOOGLE_CLIENT_ID" ]; then
+            echo "::warning::VITE_GOOGLE_CLIENT_ID is not configured; Google sign-in remains disabled until you add the OAuth client ID."
+            exit 0
+          fi
           if [[ "$VITE_GOOGLE_CLIENT_ID" != *.apps.googleusercontent.com ]]; then
-            echo "::error::Set the VITE_GOOGLE_CLIENT_ID repository variable to your Google OAuth Web client ID."
+            echo "::error::VITE_GOOGLE_CLIENT_ID must be a valid Google OAuth Web client ID ending in .apps.googleusercontent.com."
             exit 1
           fi
       - run: npm run build

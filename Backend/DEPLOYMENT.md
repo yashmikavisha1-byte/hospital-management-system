@@ -87,11 +87,11 @@ client ID of type **Web application**. Add these authorized JavaScript origins:
 Set the matching client ID and client secret in the backend environment. Set
 the same client ID as `VITE_GOOGLE_CLIENT_ID` in `client/.env` for local
 development, then restart the Vite server. For production, add
-`VITE_GOOGLE_CLIENT_ID` as a GitHub Actions repository variable before running
-the deploy workflow. The client ID is public; never expose the client secret in
-the frontend or in a `VITE_` variable. The deploy workflow validates that the
-client ID is configured so the Google buttons are not silently disabled on the
-deployed site.
+`VITE_GOOGLE_CLIENT_ID` as a GitHub Actions repository variable if you want
+Google sign-in enabled on the deployed site. The client ID is public; never
+expose the client secret in the frontend or in a `VITE_` variable. The deploy
+workflow warns when the ID is missing and only fails if a configured value is
+not a valid Google OAuth Web client ID.
 
 The login page provides separate Admin, Doctor, and Patient Google sign-in
 buttons. Google email verification is checked by the backend. Admin and doctor
