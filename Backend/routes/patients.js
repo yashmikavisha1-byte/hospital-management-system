@@ -4,6 +4,30 @@ const { protect, allow } = require("../middleware/auth");
 
 router.use(protect);
 
+// ---- Patient's own profile (must stay ABOVE the "/:id" routes) ----
+router.get("/me", allow("patient"), async (req, res) => {
+  const userId = req.user._id || req.user.id;
+  const patient = await Patient.findOne({ user: userId });
+  res.json(patient); // null when no profile yet
+});
+
+router.post("/me", allow("patient"), async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const exists = await Patient.findOne({ user: userId });
+    if (exists) return res.status(400).json({ message: "Profile already exists" });
+
+    const { name, age, gender, phone, address, bloodGroup } = req.body;
+    const patient = await Patient.create({
+      name, age, gender, phone, address, bloodGroup,
+      user: userId,
+    });
+    res.status(201).json(patient);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
 // Register a patient
 router.post("/", allow("admin", "receptionist"), async (req, res) => {
   try {

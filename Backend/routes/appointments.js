@@ -42,7 +42,7 @@ async function canTouch(req, appt) {
 // BOOK
 router.post("/", allow("admin", "receptionist", "patient"), async (req, res) => {
   try {
-    let { patientId, doctorId, date, time, reason } = req.body;
+    let { patientId, doctorId, date, time } = req.body;
 
     if (req.user.role === "patient") {
       const me = await Patient.findOne({ user: req.user.id });
@@ -61,7 +61,6 @@ router.post("/", allow("admin", "receptionist", "patient"), async (req, res) => 
       doctor: doctorId,
       date,
       time,
-      reason,
       bookedBy: req.user.name,
     });
     res.status(201).json(appt);

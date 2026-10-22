@@ -15,9 +15,10 @@ function RequireAuth() {
   return user ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-function LoginRoute() {
+function LoginRoute({ role }) {
   const { user } = useAuth();
-  return user ? <Navigate to="/" replace /> : <Login />;
+  // only redirect when the logged-in user's role matches this login page
+  return user && user.role === role ? <Navigate to="/" replace /> : <Login role={role} />;
 }
 
 export default function App() {
@@ -25,10 +26,14 @@ export default function App() {
     <HashRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/login" element={<LoginRoute />} />
+          <Route path="/login" element={<Navigate to="/patient/login" replace />} />
+          <Route path="/admin/login" element={<LoginRoute role="admin" />} />
+          <Route path="/doctor/login" element={<LoginRoute role="doctor" />} />
+          <Route path="/patient/login" element={<LoginRoute role="patient" />} />
           <Route element={<RequireAuth />}>
             <Route element={<Layout />}>
               <Route index element={<Home />} />
+              <Route path="logbook" element={<Navigate to="/" replace />} />
               <Route path=":page" element={<RoutedPage />} />
             </Route>
           </Route>

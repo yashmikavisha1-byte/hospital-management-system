@@ -1,9 +1,15 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 
-export default function Login() {
-  const { login } = useAuth();
+const ROLES = {
+  admin: { label: "Admin", subtitle: "Manage the hospital, staff and system settings." },
+  doctor: { label: "Doctor", subtitle: "Access your patients, schedule and records." },
+  patient: { label: "Patient", subtitle: "View your appointments and health records." },
+};
+
+export default function Login({ role = "patient" }) {
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -11,12 +17,22 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const info = ROLES[role] || ROLES.patient;
+
   const submit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await login(email.trim(), password);
+      const result = await login(email.trim(), password);
+      const user = result?.user || result;
+
+      // block users who log in on the wrong role page
+      if (user?.role && user.role !== role) {
+        if (logout) logout();
+        setError(`This account is not a ${info.label}. Please use the correct login page.`);
+        return;
+      }
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Cannot reach the server");
@@ -45,15 +61,16 @@ export default function Login() {
               <path d="M12 3v18M3 12h18" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
             </svg>
           </div>
-          <p className="login-eyebrow">WELCOME BACK</p>
-          <h1 id="login-heading">Sign in to your account</h1>
-          <p className="login-subtitle">Access your hospital workspace securely.</p>
+          <p className="login-eyebrow">{info.label.toUpperCase()} LOGIN</p>
+          <h1 id="login-heading">Sign in as {info.label}</h1>
+          <p className="login-subtitle">{info.subtitle}</p>
+
+          {error && <p className="login-error" role="alert">{error}</p>}
 
           <form className="login-form" onSubmit={submit}>
             <label htmlFor="login-email">Email address</label>
             <input
               autoComplete="username"
-              autoFocus
               id="login-email"
               type="email"
               placeholder="you@hospital.com"
@@ -85,11 +102,24 @@ export default function Login() {
               </button>
             </div>
 
-            {error && <p className="login-error" role="alert">{error}</p>}
             <button className="login-submit" type="submit" disabled={loading}>
               {loading ? <><span className="login-spinner" /> Signing in…</> : <>Sign in <span aria-hidden="true">→</span></>}
             </button>
           </form>
+
+          <p className="login-role-switch">
+            Sign in as:{" "}
+            {Object.entries(ROLES).map(([key, r], i) => (
+              <span key={key}>
+                {i > 0 && " | "}
+                {key === role ? (
+                  <strong>{r.label}</strong>
+                ) : (
+                  <Link to={`/${key}/login`}>{r.label}</Link>
+                )}
+              </span>
+            ))}
+          </p>
 
           <div className="login-security">
             <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -100,6 +130,36 @@ export default function Login() {
           </div>
         </section>
       </main>
+
+      <section aria-label="MediFlow care features" className="login-benefits">
+        <div className="login-benefits-heading">
+          <p className="login-eyebrow">CARE, CONNECTED</p>
+          <h2>A simpler way to manage your care</h2>
+        </div>
+        <div className="login-benefits-grid">
+          <article className="login-benefit">
+            <span aria-hidden="true" className="login-benefit-icon">◷</span>
+            <div>
+              <h3>Appointments</h3>
+              <p>Keep upcoming visits easy to find and follow.</p>
+            </div>
+          </article>
+          <article className="login-benefit">
+            <span aria-hidden="true" className="login-benefit-icon">▤</span>
+            <div>
+              <h3>Care information</h3>
+              <p>Stay connected with the details that matter to you.</p>
+            </div>
+          </article>
+          <article className="login-benefit">
+            <span aria-hidden="true" className="login-benefit-icon">✓</span>
+            <div>
+              <h3>One workspace</h3>
+              <p>A clear place to manage your hospital experience.</p>
+            </div>
+          </article>
+        </div>
+      </section>
 
       <footer className="login-footer">
         <span>© 2026 MediFlow Health</span>

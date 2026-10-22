@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const { connectDatabase } = require("./db");
+const { ensureDevelopmentUsers } = require("./seedUsers");
 const User = require("./models/User");
 
 const app = express();
@@ -56,7 +57,8 @@ async function ensureAdmin() {
 }
 
 async function initialize() {
-  await connectDatabase();
+  const { inMemory } = await connectDatabase();
+  if (inMemory) await ensureDevelopmentUsers();
   await ensureAdmin();
 }
 

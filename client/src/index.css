@@ -26,8 +26,10 @@ button {
   position: relative;
   display: flex;
   min-height: 100vh;
+  min-height: 100svh;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background:
     radial-gradient(ellipse at 8% 85%, rgba(63, 142, 230, 0.10), transparent 32%),
     radial-gradient(ellipse at 91% 8%, rgba(70, 197, 174, 0.12), transparent 31%),
@@ -65,6 +67,7 @@ button {
 }
 
 .login-brand {
+  flex: 0 0 auto;
   gap: 11px;
   padding: 28px 5.5%;
 }
@@ -106,7 +109,7 @@ button {
   position: relative;
   z-index: 1;
   display: grid;
-  flex: 1;
+  flex: 1 0 auto;
   place-items: center;
   padding: 20px;
 }
@@ -157,6 +160,84 @@ button {
   margin: 9px 0 27px;
   color: #78889e;
   font-size: 14px;
+}
+
+.login-google-section {
+  margin-bottom: 20px;
+}
+
+.login-google-heading {
+  margin: 0 0 10px;
+  color: #344861;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.login-google-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.login-google-button {
+  display: flex;
+  min-width: 0;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #dce5ef;
+  border-radius: 9px;
+  padding: 8px 5px;
+  background: white;
+  color: #344861;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.login-google-button:hover:not(:disabled) {
+  border-color: #9bb9d2;
+  background: #f8fbff;
+}
+
+.login-google-button:focus-visible {
+  outline: 3px solid rgba(22, 133, 171, 0.25);
+  outline-offset: 2px;
+}
+
+.login-google-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.login-google-mark {
+  color: #4285f4;
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.login-google-note {
+  margin: 9px 0 0;
+  color: #8795a8;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+  color: #8a98ab;
+  font-size: 10px;
+}
+
+.login-divider::before,
+.login-divider::after {
+  height: 1px;
+  flex: 1;
+  background: #e8edf3;
+  content: "";
 }
 
 .login-form {
@@ -305,10 +386,116 @@ button {
 }
 
 .login-footer {
+  flex: 0 0 auto;
   justify-content: space-between;
   padding: 20px 5.5%;
   color: #8b9aab;
   font-size: 11px;
+}
+
+.login-benefits {
+  position: relative;
+  z-index: 1;
+  width: min(100% - 40px, 920px);
+  margin: 6px auto 14px;
+}
+
+.login-benefits-heading {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.login-benefits-heading .login-eyebrow {
+  margin-bottom: 6px;
+}
+
+.login-benefits-heading h2 {
+  margin: 0;
+  color: #233b58;
+  font-size: 20px;
+  letter-spacing: -0.45px;
+}
+
+.login-benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.login-benefit {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid rgba(219, 231, 241, 0.9);
+  border-radius: 13px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 8px 22px rgba(31, 61, 96, 0.035);
+}
+
+.login-benefit-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  border-radius: 11px;
+  background: #e9f7f5;
+  color: #168e8d;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.login-benefit h3 {
+  margin: 1px 0 5px;
+  color: #2a405c;
+  font-size: 13px;
+}
+
+.login-benefit p {
+  margin: 0;
+  color: #7b8ba0;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+@media (max-height: 700px) {
+  .login-brand {
+    padding-top: 14px;
+    padding-bottom: 10px;
+  }
+
+  .login-content {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .login-card {
+    padding-top: 26px;
+    padding-bottom: 22px;
+  }
+
+  .login-card-icon {
+    margin-bottom: 16px;
+  }
+
+  .login-subtitle {
+    margin-bottom: 18px;
+  }
+
+  .login-security {
+    margin-top: 17px;
+  }
+
+  .login-footer {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .login-benefits {
+    margin-top: 10px;
+  }
 }
 
 .app {
@@ -380,6 +567,21 @@ button {
 
   .login-footer {
     padding: 18px 20px;
+  }
+
+  .login-benefits {
+    width: min(100% - 32px, 520px);
+    margin-top: 8px;
+  }
+
+  .login-benefits-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .login-benefit {
+    align-items: center;
+    padding: 12px;
   }
 }
 
@@ -1116,6 +1318,146 @@ button {
   color: #8da0b4;
 }
 
+.login-role-switch {
+  margin: 16px 0 0;
+  color: #64758b;
+  font-size: 13px;
+  text-align: center;
+}
+
+.login-role-switch a {
+  color: #147f9e;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.login-role-switch a:hover {
+  color: #0e657e;
+}
+
+.app > .sidebar .brand-name {
+  display: inline;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.app > .main > header {
+  gap: 16px;
+}
+
+.header-account {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+  margin-left: auto;
+}
+
+.header-avatar {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border: 1px solid #dcecef;
+  border-radius: 50%;
+  background: #edf8f7;
+  color: #167e83;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.header-account-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.header-account-copy strong {
+  overflow: hidden;
+  color: #344861;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-account-copy small {
+  color: #8795a8;
+  font-size: 10px;
+  text-transform: capitalize;
+}
+
+.app > .main > header .sign-out-button {
+  flex: 0 0 auto;
+  border: 1px solid #e1e9f0;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.app > .main > header .sign-out-button:hover {
+  border-color: #d4e2ec;
+}
+
+.sidebar-nav a:focus-visible,
+.dashboard-card:focus-visible,
+.dashboard-shortcuts a:focus-visible,
+.text-link:focus-visible,
+.app button:focus-visible,
+.app input:focus-visible,
+.app select:focus-visible,
+.app textarea:focus-visible {
+  outline: 3px solid rgba(22, 133, 171, 0.3);
+  outline-offset: 2px;
+}
+
+.dashboard-card,
+.dashboard-shortcuts a,
+.management-card {
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.dashboard-card:hover,
+.dashboard-shortcuts a:hover {
+  border-color: #cfe2e8;
+}
+
+.dashboard-shortcuts a:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(28, 49, 75, 0.06);
+}
+
+.data-table {
+  min-width: 620px;
+}
+
+.section-heading p,
+.empty-panel,
+.feature-placeholder p {
+  line-height: 1.6;
+}
+
+.primary-action,
+.secondary-action,
+.small-action,
+.login-google-button {
+  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.primary-action:hover:not(:disabled),
+.small-action:hover {
+  transform: translateY(-1px);
+}
+
 @media (max-width: 1050px) {
   .app > .sidebar {
     width: 205px;
@@ -1140,19 +1482,31 @@ button {
   }
 
   .app > .sidebar {
-    position: static;
+    position: sticky;
+    z-index: 4;
+    top: 0;
     width: 100%;
     height: auto;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 5px;
-    padding: 12px;
+    gap: 0;
+    padding: 10px 12px 8px;
+    box-shadow: 0 5px 16px rgba(8, 26, 48, 0.14);
   }
 
   .app > .sidebar h3 {
     width: 100%;
-    margin: 0 0 5px;
-    padding: 4px 8px 10px;
+    margin: 0;
+    padding: 2px 6px 9px;
+    border-bottom: 0;
+  }
+
+  .sidebar-nav {
+    width: 100%;
+    flex-direction: row;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 2px 3px;
+    scrollbar-width: thin;
   }
 
   .workspace-label {
@@ -1164,6 +1518,7 @@ button {
   }
 
   .app > .sidebar a {
+    flex: 0 0 auto;
     min-height: 36px;
     padding: 8px 10px;
     font-size: 11px;
@@ -1214,5 +1569,25 @@ button {
 
   .today-chip {
     display: none;
+  }
+
+  .app > .main > header {
+    gap: 10px;
+  }
+
+  .header-account {
+    margin-left: auto;
+  }
+
+  .header-account-copy {
+    display: none;
+  }
+
+  .app > .main > header .sign-out-button {
+    padding: 8px 10px;
+  }
+
+  .login-role-switch {
+    font-size: 12px;
   }
 }

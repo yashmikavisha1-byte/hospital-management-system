@@ -35,7 +35,7 @@ function Table({ columns, rows, empty }) {
         <thead><tr>{columns.map((column) => <th key={column.label}>{column.label}</th>)}</tr></thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.id}>
+            <tr key={row._id || row.id}>
               {columns.map((column) => <td key={column.label}>{column.render(row)}</td>)}
             </tr>
           ))}
@@ -54,6 +54,35 @@ function Field({ label, name, type = "text", required = true, children, ...props
   );
 }
 
+function PatientProfileForm({ onSubmit, saving, name }) {
+  return (
+    <section className="management-card">
+      <div className="section-heading">
+        <div>
+          <h2>Create your patient profile</h2>
+          <p>Complete your details once to book appointments and access your records.</p>
+        </div>
+      </div>
+      <form className="management-form" onSubmit={onSubmit}>
+        <Field label="Full name" name="name" defaultValue={name || ""} autoComplete="name" />
+        <Field label="Age" name="age" type="number" min="0" max="120" />
+        <Field label="Gender" name="gender">
+          <select defaultValue="female" name="gender" required>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+          </select>
+        </Field>
+        <Field label="Phone" name="phone" type="tel" autoComplete="tel" />
+        <Field label="Blood group" name="bloodGroup" required={false} placeholder="For example, O+" />
+        <Field label="Address" name="address" required={false} autoComplete="street-address" />
+        <button className="primary-action" disabled={saving} type="submit">
+          {saving ? "Saving…" : "Save profile"}
+        </button>
+      </form>
+    </section>
+  );
+}
+
 export default function ManagementPage({ page }) {
   const { user } = useAuth();
   const [patients, setPatients] = useState([]);
@@ -68,6 +97,8 @@ export default function ManagementPage({ page }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [payingBill, setPayingBill] = useState("");
+  const [needsProfile, setNeedsProfile] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -88,6 +119,14 @@ export default function ManagementPage({ page }) {
             if (active) setDoctors(response.data);
             break;
           case "appointments": {
+            if (user.role === "patient") {
+              const me = await api.get("/patients/me");
+              if (!me.data) {
+                if (active) { setNeedsProfile(true); setAppointments([]); }
+                break;
+              }
+              if (active) setNeedsProfile(false);
+            }
             const results = await Promise.all([
               api.get("/appointments"),
               api.get("/doctors"),
@@ -102,7 +141,12 @@ export default function ManagementPage({ page }) {
           }
           case "records":
             if (user.role === "patient") {
-              throw new Error("Your account is not linked to a patient profile yet. Ask reception to link your profile.");
+              response = await api.get("/patients/me");
+              if (active) {
+                setNeedsProfile(!response.data);
+                setRecord(response.data);
+              }
+              break;
             }
             response = await api.get("/patients");
             if (active) setPatients(response.data);
@@ -128,7 +172,7 @@ export default function ManagementPage({ page }) {
     }
     load();
     return () => { active = false; };
-  }, [page, user.role]);
+  }, [page, user.role, reloadKey]);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -176,7 +220,6 @@ export default function ManagementPage({ page }) {
           doctorId: values.doctorId,
           date: values.date,
           time: values.time,
-          reason: values.reason,
         });
         const { data } = await api.get("/appointments");
         setAppointments(data);
@@ -196,6 +239,32 @@ export default function ManagementPage({ page }) {
       form.reset();
     } catch (submitError) {
       setError(formatError(submitError));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function createMyProfile(event) {
+    event.preventDefault();
+    setError("");
+    setSuccess("");
+    setSaving(true);
+    const v = Object.fromEntries(new FormData(event.currentTarget));
+    try {
+      const { data } = await api.post("/patients/me", {
+        name: String(v.name || "").trim(),
+        age: Number(v.age),
+        gender: v.gender,
+        phone: String(v.phone || "").trim(),
+        address: String(v.address || "").trim(),
+        bloodGroup: String(v.bloodGroup || "").trim(),
+      });
+      setNeedsProfile(false);
+      setRecord(data);
+      setSuccess("Your patient profile is saved and linked to your account.");
+      if (page === "appointments") setReloadKey((key) => key + 1);
+    } catch (e) {
+      setError(formatError(e));
     } finally {
       setSaving(false);
     }
@@ -296,7 +365,7 @@ export default function ManagementPage({ page }) {
             <form className="management-form" onSubmit={submit}>
               <Field label="Full name" name="name" />
               <Field label="Age" name="age" type="number" min="0" max="120" />
-              <Field label="Gender" name="gender"><select defaultValue="" name="gender" required><option disabled value="">Choose gender</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select></Field>
+              <Field label="Gender" name="gender"><select defaultValue="female" name="gender" required><option value="female">Female</option><option value="male">Male</option></select></Field>
               <Field label="Phone" name="phone" type="tel" />
               <Field label="Blood group" name="bloodGroup" required={false} />
               <Field label="Address" name="address" required={false} />
@@ -321,13 +390,15 @@ export default function ManagementPage({ page }) {
       </section>}
 
       {page === "appointments" && <>
-        {canCreateAppointment && <section className="management-card"><div className="section-heading"><div><h2>Book an appointment</h2><p>Choose a patient, doctor, and visit time.</p></div></div>
+        {user.role === "patient" && needsProfile && (
+          <PatientProfileForm onSubmit={createMyProfile} saving={saving} name={user.name} />
+        )}
+        {canCreateAppointment && !needsProfile && <section className="management-card"><div className="section-heading"><div><h2>Book an appointment</h2><p>Choose a patient, doctor, and visit time.</p></div></div>
           <form className="management-form" onSubmit={submit}>
             {user.role !== "patient" && <Field label="Patient" name="patientId"><select defaultValue="" name="patientId" required><option disabled value="">Select patient</option>{patients.map((patient) => <option key={patient._id} value={patient._id}>{patient.name} · {patient.phone}</option>)}</select></Field>}
             <Field label="Doctor" name="doctorId"><select defaultValue="" name="doctorId" required><option disabled value="">Select doctor</option>{doctors.map((doctor) => <option key={doctor._id} value={doctor._id}>{doctor.name} · {doctor.specialization}</option>)}</select></Field>
             <Field label="Date" name="date" type="date" min={new Date().toISOString().slice(0, 10)} />
             <Field label="Time" name="time" type="time" />
-            <Field label="Reason for visit" name="reason" required={false} />
             <button className="primary-action" disabled={saving} type="submit">{saving ? "Booking…" : "Book appointment"}</button>
           </form>
         </section>}
@@ -337,9 +408,14 @@ export default function ManagementPage({ page }) {
       </>}
 
       {page === "records" && <>
-        <section className="management-card"><div className="section-heading"><div><h2>Find a patient record</h2><p>Select a patient to view their medical history.</p></div></div>
-          <div className="record-picker"><select aria-label="Select patient record" onChange={(event) => event.target.value && openRecord(event.target.value)} value={recordPatient}><option value="">Select a patient</option>{patients.map((patient) => <option key={patient._id} value={patient._id}>{patient.name} · {patient.phone}</option>)}</select></div>
-        </section>
+        {user.role === "patient" && needsProfile && (
+          <PatientProfileForm onSubmit={createMyProfile} saving={saving} name={user.name} />
+        )}
+        {user.role !== "patient" && (
+          <section className="management-card"><div className="section-heading"><div><h2>Find a patient record</h2><p>Select a patient to view their medical history.</p></div></div>
+            <div className="record-picker"><select aria-label="Select patient record" onChange={(event) => event.target.value && openRecord(event.target.value)} value={recordPatient}><option value="">Select a patient</option>{patients.map((patient) => <option key={patient._id} value={patient._id}>{patient.name} · {patient.phone}</option>)}</select></div>
+          </section>
+        )}
         {record && <section className="management-card"><div className="section-heading"><div><h2>{record.name}</h2><p>{record.age} years · {record.gender} · Blood group {record.bloodGroup || "not listed"}</p></div></div>
           {canAddRecord && <form className="record-note-form" onSubmit={submit}><Field label="Add a medical note" name="note"><textarea name="note" placeholder="Enter visit notes or medical history…" required rows="3" /></Field><button className="primary-action" disabled={saving} type="submit">{saving ? "Saving…" : "Add note"}</button></form>}
           <div className="history-list">{record.history?.length ? record.history.slice().reverse().map((entry, index) => <article className="history-entry" key={`${entry.date}-${index}`}><div><strong>{entry.addedBy || "Care team"}</strong><time>{entry.date ? new Date(entry.date).toLocaleString() : ""}</time></div><p>{entry.note}</p></article>) : <EmptyState>No medical notes have been recorded for this patient.</EmptyState>}</div>

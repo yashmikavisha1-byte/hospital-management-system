@@ -1,29 +1,51 @@
 require("dotenv").config();
 const bcrypt = require("bcryptjs");
+const mongoose = require("mongoose");
 const User = require("./models/User");
-const { connectDatabase } = require("./db");
 
-(async () => {
-  try {
-    await connectDatabase();
-    const email = "admin@hospital.com";
-    const existing = await User.findOne({ email });
-    if (existing) {
-      console.log("Admin already exists");
-      return;
-    }
+async function seedAdmin() {
+  const email = String(process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD || "";
+  const name = String(process.env.ADMIN_NAME || "Admin").trim();
 
+  if (!process.env.MONGO_URI) {
+    throw new Error("MONGO_URI must be configured to create or reset an admin account");
+  }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error("Set ADMIN_EMAIL to a valid email address in Backend/.env");
+  }
+  if (password.length < 12) {
+    throw new Error("Set ADMIN_PASSWORD to a password with at least 12 characters in Backend/.env");
+  }
+
+  await mongoose.connect(process.env.MONGO_URI);
+
+  const user = await User.findOne({ email });
+  if (user && user.role !== "admin") {
+    throw new Error("That email belongs to a non-admin account. Choose a different ADMIN_EMAIL.");
+  }
+
+  if (user) {
+    user.password = await bcrypt.hash(password, 12);
+    if (!user.name) user.name = name;
+    await user.save();
+    console.log("Admin password reset successfully.");
+  } else {
     await User.create({
-      name: "Admin",
+      name,
       email,
-      password: await bcrypt.hash("admin123", 10),
+      password: await bcrypt.hash(password, 12),
       role: "admin",
     });
-    console.log("Admin created");
-  } catch (error) {
-    console.error("Unable to create admin user:", error);
-    process.exitCode = 1;
-  } finally {
-    process.exit();
+    console.log("Admin account created successfully.");
   }
-})();
+}
+
+seedAdmin()
+  .catch((error) => {
+    console.error("Unable to create or reset admin:", error.message);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await mongoose.disconnect();
+  });

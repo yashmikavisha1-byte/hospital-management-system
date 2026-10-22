@@ -13,7 +13,7 @@ async function connectDatabase() {
   try {
     await mongoose.connect(uri);
     console.log(`MongoDB connected to ${uri.replace(/\/\/.*@/, "//***@")}`);
-    return;
+    return { inMemory: false };
   } catch (error) {
     const shouldFallback =
       error &&
@@ -26,6 +26,7 @@ async function connectDatabase() {
     memoryServer = await MongoMemoryServer.create();
     await mongoose.connect(memoryServer.getUri());
     console.log("MongoDB connected using in-memory fallback");
+    return { inMemory: true };
   }
 }
 
