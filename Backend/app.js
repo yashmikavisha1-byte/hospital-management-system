@@ -37,18 +37,22 @@ app.use("/api/lab", require("./routes/lab"));
 app.use("/api/wards", require("./routes/wards"));
 app.use("/api/dashboard", require("./routes/dashboard"));
 
-// Creates the first admin if none exists (uses ADMIN_EMAIL and ADMIN_PASSWORD)
+// Creates the first admin if none exists. Falls back to the default hospital admin
+// so the app can log in immediately without custom environment configuration.
 async function ensureAdmin() {
-  const { ADMIN_EMAIL, ADMIN_PASSWORD } = process.env;
-  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) return;
+  const email = (process.env.ADMIN_EMAIL || "admin@hospital.com").trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD || "admin123";
+
   if (await User.findOne({ role: "admin" })) return;
+  if (await User.findOne({ email })) return;
+
   await User.create({
     name: "Admin",
-    email: ADMIN_EMAIL,
-    password: await bcrypt.hash(ADMIN_PASSWORD, 10),
+    email,
+    password: await bcrypt.hash(password, 10),
     role: "admin",
   });
-  console.log("Admin account created");
+  console.log(`Admin account created for ${email}`);
 }
 
 async function initialize() {

@@ -12,12 +12,13 @@ const makeToken = (user) =>
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    if (await User.findOne({ email }))
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    if (await User.findOne({ email: normalizedEmail }))
       return res.status(400).json({ message: "Email already used" });
 
     const user = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       password: await bcrypt.hash(password, 10),
       role: "patient",
     });
@@ -29,7 +30,8 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail });
   if (!user || !(await bcrypt.compare(password, user.password)))
     return res.status(400).json({ message: "Wrong email or password" });
 

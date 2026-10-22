@@ -6,9 +6,16 @@ const { connectDatabase } = require("./db");
 (async () => {
   try {
     await connectDatabase();
+    const email = "admin@hospital.com";
+    const existing = await User.findOne({ email });
+    if (existing) {
+      console.log("Admin already exists");
+      return;
+    }
+
     await User.create({
       name: "Admin",
-      email: "admin@hospital.com",
+      email,
       password: await bcrypt.hash("admin123", 10),
       role: "admin",
     });
