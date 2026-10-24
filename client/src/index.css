@@ -123,6 +123,61 @@ button {
   box-shadow: 0 24px 70px rgba(31, 61, 96, 0.10), 0 3px 10px rgba(31, 61, 96, 0.03);
 }
 
+.signup-card {
+  width: min(100%, 520px);
+}
+
+.signup-form > input,
+.signup-field input,
+.signup-field select {
+  width: 100%;
+  height: 46px;
+  border: 1px solid #dce5ef;
+  border-radius: 10px;
+  outline: none;
+  padding: 0 13px;
+  background: #fbfdff;
+  color: #203550;
+  font-size: 14px;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.signup-form > input {
+  margin-bottom: 19px;
+}
+
+.signup-form > input:focus,
+.signup-field input:focus,
+.signup-field select:focus {
+  border-color: #36a9b1;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(54, 169, 177, 0.13);
+}
+
+.signup-fields-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.signup-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.signup-field label {
+  margin-bottom: 8px;
+  color: #344861;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.signup-field input,
+.signup-field select {
+  margin-bottom: 19px;
+}
+
 .login-card-icon {
   display: grid;
   width: 48px;
@@ -563,6 +618,10 @@ button {
 
   .login-card h1 {
     font-size: 24px;
+  }
+
+  .signup-fields-row {
+    gap: 10px;
   }
 
   .login-footer {

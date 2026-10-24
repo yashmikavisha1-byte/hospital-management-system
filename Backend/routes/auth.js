@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const User = require("../models/User");
+const Patient = require("../models/Patient");
 const { protect, allow } = require("../middleware/auth");
 
 const googleOAuthClient = new OAuth2Client(
@@ -18,17 +19,58 @@ const makeToken = (user) =>
 
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, age, gender, phone, address } = req.body;
+    const normalizedName = String(name || "").trim();
     const normalizedEmail = String(email || "").trim().toLowerCase();
+    const hasPatientDetails =
+      age !== undefined || gender !== undefined || phone !== undefined || address !== undefined;
+
+    if (!normalizedName) return res.status(400).json({ message: "Name is required" });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({ message: "Enter a valid email address" });
+    }
+    if (typeof password !== "string" || password.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters" });
+    }
+    if (hasPatientDetails) {
+      const patientAge = Number(age);
+      if (!Number.isInteger(patientAge) || patientAge < 1 || patientAge > 120) {
+        return res.status(400).json({ message: "Age must be between 1 and 120" });
+      }
+      if (!["male", "female"].includes(gender)) {
+        return res.status(400).json({ message: "Choose a valid gender" });
+      }
+      if (typeof phone !== "string" || !phone.trim()) {
+        return res.status(400).json({ message: "Phone number is required" });
+      }
+    }
+
     if (await User.findOne({ email: normalizedEmail }))
       return res.status(400).json({ message: "Email already used" });
 
     const user = await User.create({
-      name,
+      name: normalizedName,
       email: normalizedEmail,
       password: await bcrypt.hash(password, 10),
       role: "patient",
     });
+
+    if (hasPatientDetails) {
+      try {
+        await Patient.create({
+          name: normalizedName,
+          age: Number(age),
+          gender,
+          phone: phone.trim(),
+          address: typeof address === "string" ? address.trim() : "",
+          user: user._id,
+        });
+      } catch (error) {
+        await User.deleteOne({ _id: user._id });
+        throw error;
+      }
+    }
+
     res.status(201).json({ token: makeToken(user), role: user.role, name: user.name });
   } catch (err) {
     res.status(400).json({ message: err.message });

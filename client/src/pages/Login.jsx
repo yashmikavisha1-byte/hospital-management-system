@@ -120,6 +120,11 @@ export default function Login({ role = "patient" }) {
               </span>
             ))}
           </p>
+          {role === "patient" && (
+            <p className="login-role-switch">
+              New to MediFlow? <Link to="/patient/signup">Create a patient account</Link>
+            </p>
+          )}
 
           <div className="login-security">
             <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">

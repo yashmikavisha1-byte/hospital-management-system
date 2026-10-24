@@ -29,6 +29,12 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const register = async (details) => {
+    const { data } = await api.post("/auth/register", details);
+    saveSession(data);
+    return data;
+  };
+
   const loginWithGoogle = useCallback(async (code, role) => {
     const { data } = await api.post("/auth/google", { code, role });
     saveSession(data);
@@ -41,7 +47,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, login, register, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

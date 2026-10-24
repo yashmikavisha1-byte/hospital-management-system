@@ -2,6 +2,7 @@ import { HashRouter, Navigate, Outlet, Route, Routes, useParams } from "react-ro
 import { AuthProvider, useAuth } from "./AuthContext";
 import Layout from "./Layout";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import Home from "./pages/Home";
 import ManagementPage from "./pages/Management";
 
@@ -21,6 +22,11 @@ function LoginRoute({ role }) {
   return user && user.role === role ? <Navigate to="/" replace /> : <Login role={role} />;
 }
 
+function SignupRoute() {
+  const { user } = useAuth();
+  return user ? <Navigate to="/" replace /> : <Signup />;
+}
+
 export default function App() {
   return (
     <HashRouter>
@@ -30,6 +36,7 @@ export default function App() {
           <Route path="/admin/login" element={<LoginRoute role="admin" />} />
           <Route path="/doctor/login" element={<LoginRoute role="doctor" />} />
           <Route path="/patient/login" element={<LoginRoute role="patient" />} />
+          <Route path="/patient/signup" element={<SignupRoute />} />
           <Route element={<RequireAuth />}>
             <Route element={<Layout />}>
               <Route index element={<Home />} />
