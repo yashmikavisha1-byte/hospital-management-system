@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+import AuthLayout from "../AuthLayout";
 
 export default function Signup() {
   const { register } = useAuth();
@@ -16,6 +17,8 @@ export default function Signup() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const updateField = (event) => {
     const { name, value } = event.target;
@@ -45,20 +48,8 @@ export default function Signup() {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-decoration login-decoration-one" />
-      <div className="login-decoration login-decoration-two" />
-
-      <header className="login-brand">
-        <div className="login-brand-icon" aria-hidden="true">+</div>
-        <div>
-          <strong>MediFlow</strong>
-          <span>HOSPITAL MANAGEMENT</span>
-        </div>
-      </header>
-
-      <main className="login-content">
-        <section className="login-card signup-card" aria-labelledby="signup-heading">
+    <AuthLayout>
+        <section className="login-card signup-card auth-card" aria-labelledby="signup-heading">
           <div className="login-card-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none">
               <path d="M12 3v18M3 12h18" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
@@ -66,31 +57,38 @@ export default function Signup() {
           </div>
           <p className="login-eyebrow">PATIENT SIGN UP</p>
           <h1 id="signup-heading">Create your account</h1>
-          <p className="login-subtitle">Sign up to manage your care and appointments.</p>
+          <p className="login-subtitle">Set up your secure space for appointments and care.</p>
 
-          {error && <p className="login-error" role="alert">{error}</p>}
+          {error && <p className="login-error" role="alert"><span aria-hidden="true">!</span>{error}</p>}
 
           <form className="login-form signup-form" onSubmit={submit}>
-            <label htmlFor="signup-name">Full name</label>
-            <input
-              autoComplete="name"
-              id="signup-name"
-              name="name"
-              onChange={updateField}
-              required
-              value={details.name}
-            />
-
-            <label htmlFor="signup-email">Email address</label>
-            <input
-              autoComplete="email"
-              id="signup-email"
-              name="email"
-              onChange={updateField}
-              required
-              type="email"
-              value={details.email}
-            />
+            <div className="signup-fields-row">
+              <div className="signup-field">
+                <label htmlFor="signup-name">Full name</label>
+                <input
+                  autoComplete="name"
+                  id="signup-name"
+                  name="name"
+                  onChange={updateField}
+                  placeholder="e.g. Nimal Perera"
+                  required
+                  value={details.name}
+                />
+              </div>
+              <div className="signup-field">
+                <label htmlFor="signup-email">Email address</label>
+                <input
+                  autoComplete="email"
+                  id="signup-email"
+                  name="email"
+                  onChange={updateField}
+                  placeholder="you@example.com"
+                  required
+                  type="email"
+                  value={details.email}
+                />
+              </div>
+            </div>
 
             <div className="signup-fields-row">
               <div className="signup-field">
@@ -101,6 +99,7 @@ export default function Signup() {
                   min="1"
                   name="age"
                   onChange={updateField}
+                  placeholder="Age"
                   required
                   type="number"
                   value={details.age}
@@ -120,58 +119,83 @@ export default function Signup() {
                   <option value="male">Male</option>
                 </select>
               </div>
+              <div className="signup-field">
+                <label htmlFor="signup-phone">Phone number</label>
+                <input
+                  autoComplete="tel"
+                  id="signup-phone"
+                  name="phone"
+                  onChange={updateField}
+                  placeholder="Your contact number"
+                  required
+                  type="tel"
+                  value={details.phone}
+                />
+              </div>
             </div>
 
-            <label htmlFor="signup-phone">Phone number</label>
-            <input
-              autoComplete="tel"
-              id="signup-phone"
-              name="phone"
-              onChange={updateField}
-              required
-              type="tel"
-              value={details.phone}
-            />
-
-            <label htmlFor="signup-password">Password</label>
-            <input
-              autoComplete="new-password"
-              id="signup-password"
-              minLength="8"
-              name="password"
-              onChange={updateField}
-              required
-              type="password"
-              value={details.password}
-            />
-
-            <label htmlFor="signup-confirm-password">Confirm password</label>
-            <input
-              autoComplete="new-password"
-              id="signup-confirm-password"
-              minLength="8"
-              name="confirmPassword"
-              onChange={updateField}
-              required
-              type="password"
-              value={details.confirmPassword}
-            />
+            <div className="signup-fields-row">
+              <div className="signup-field">
+                <label htmlFor="signup-password">Password</label>
+                <div className="signup-password-field">
+                  <input
+                    autoComplete="new-password"
+                    id="signup-password"
+                    minLength="8"
+                    name="password"
+                    onChange={updateField}
+                    placeholder="At least 8 characters"
+                    required
+                    type={showPassword ? "text" : "password"}
+                    value={details.password}
+                  />
+                  <button
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="password-toggle"
+                    onClick={() => setShowPassword((visible) => !visible)}
+                    type="button"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+              <div className="signup-field">
+                <label htmlFor="signup-confirm-password">Confirm password</label>
+                <div className="signup-password-field">
+                  <input
+                    autoComplete="new-password"
+                    id="signup-confirm-password"
+                    minLength="8"
+                    name="confirmPassword"
+                    onChange={updateField}
+                    placeholder="Enter it again"
+                    required
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={details.confirmPassword}
+                  />
+                  <button
+                    aria-label={showConfirmPassword ? "Hide confirmation" : "Show confirmation"}
+                    className="password-toggle"
+                    onClick={() => setShowConfirmPassword((visible) => !visible)}
+                    type="button"
+                  >
+                    {showConfirmPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <p className="signup-password-hint">Use at least 8 characters. Choose a password you haven’t used elsewhere.</p>
 
             <button className="login-submit" disabled={loading} type="submit">
               {loading ? <><span className="login-spinner" /> Creating account…</> : <>Create account <span aria-hidden="true">→</span></>}
             </button>
           </form>
 
-          <p className="login-role-switch">
-            Already have an account? <Link to="/patient/login">Sign in</Link>
-          </p>
+          <div className="auth-signup-prompt">
+            <span>Already have an account?</span>
+            <Link to="/patient/login">Sign in <span aria-hidden="true">→</span></Link>
+          </div>
         </section>
-      </main>
-
-      <footer className="login-footer">
-        <span>© 2026 MediFlow Health</span>
-        <span>Care made coordinated.</span>
-      </footer>
-    </div>
+    </AuthLayout>
   );
 }
