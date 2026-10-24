@@ -39,10 +39,23 @@ Add these environment variables in the Vercel project settings for Production:
 - `GOOGLE_CLIENT_SECRET`: the matching OAuth 2.0 client secret
 - `ADMIN_EMAIL` and `ADMIN_PASSWORD`: optional bootstrap credentials; if set,
   the first admin is created when the service initializes
+- `BOOTSTRAP_PATIENT_EMAIL`, `BOOTSTRAP_PATIENT_PASSWORD`,
+  `BOOTSTRAP_PATIENT_AGE`, `BOOTSTRAP_PATIENT_GENDER`, and
+  `BOOTSTRAP_PATIENT_PHONE`: optional initial patient account and linked
+  patient profile. Set all five together. Use a unique password of at least
+  12 characters. `BOOTSTRAP_PATIENT_NAME` and `BOOTSTRAP_PATIENT_ADDRESS`
+  are optional.
 
 Keep credentials in Vercel's environment-variable settings, not in Git. Deploy
 the project, then test `https://<your-vercel-domain>/health`; it should return
 `{"status":"ok"}`.
+
+The bootstrap patient account is created only if its email is not already
+registered. The matching patient profile is created if one does not exist.
+Existing passwords are never reset by this bootstrap. After saving these
+variables in the production backend settings, redeploy or restart the backend
+and sign in on the Patient page with the configured email and password. Do not
+use the local demo password for a production account.
 
 ## Reset or create a local admin login
 
@@ -96,9 +109,8 @@ not a valid Google OAuth Web client ID.
 The login page provides separate Admin, Doctor, and Patient Google sign-in
 buttons. Google email verification is checked by the backend. Admin and doctor
 accounts must already exist with the matching role; only patient accounts can
-be created through Google sign-up. A newly created patient login does not create
-a medical patient profile, and the current app has no profile-linking flow.
-Patient booking and records therefore require a linked medical profile.
+be created through Google sign-up. Patient registration creates a linked
+medical profile so the patient can use appointment and records features.
 
 ## 4. Connect the GitHub Pages frontend
 

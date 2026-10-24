@@ -22,3 +22,17 @@ services:
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
+      - key: BOOTSTRAP_PATIENT_EMAIL
+        sync: false
+      - key: BOOTSTRAP_PATIENT_PASSWORD
+        sync: false
+      - key: BOOTSTRAP_PATIENT_NAME
+        sync: false
+      - key: BOOTSTRAP_PATIENT_AGE
+        sync: false
+      - key: BOOTSTRAP_PATIENT_GENDER
+        sync: false
+      - key: BOOTSTRAP_PATIENT_PHONE
+        sync: false
+      - key: BOOTSTRAP_PATIENT_ADDRESS
+        sync: false

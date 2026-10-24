@@ -5,6 +5,7 @@ const bcrypt = require("bcryptjs");
 const { connectDatabase } = require("./db");
 const { ensureDevelopmentUsers } = require("./seedUsers");
 const User = require("./models/User");
+const Patient = require("./models/Patient");
 
 const app = express();
 
@@ -56,10 +57,79 @@ async function ensureAdmin() {
   console.log(`Admin account created for ${email}`);
 }
 
+async function ensureBootstrapPatient() {
+  const email = String(process.env.BOOTSTRAP_PATIENT_EMAIL || "").trim().toLowerCase();
+  const password = process.env.BOOTSTRAP_PATIENT_PASSWORD || "";
+  const name = String(process.env.BOOTSTRAP_PATIENT_NAME || "Patient").trim();
+  const age = Number(process.env.BOOTSTRAP_PATIENT_AGE);
+  const gender = process.env.BOOTSTRAP_PATIENT_GENDER;
+  const phone = String(process.env.BOOTSTRAP_PATIENT_PHONE || "").trim();
+  const address = String(process.env.BOOTSTRAP_PATIENT_ADDRESS || "").trim();
+  const configured = [
+    email,
+    password,
+    process.env.BOOTSTRAP_PATIENT_AGE,
+    gender,
+    phone,
+  ];
+
+  if (configured.every((value) => !value)) return;
+  if (configured.some((value) => !value)) {
+    throw new Error(
+      "Configure BOOTSTRAP_PATIENT_EMAIL, BOOTSTRAP_PATIENT_PASSWORD, BOOTSTRAP_PATIENT_AGE, BOOTSTRAP_PATIENT_GENDER, and BOOTSTRAP_PATIENT_PHONE together"
+    );
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error("BOOTSTRAP_PATIENT_EMAIL must be a valid email address");
+  }
+  if (password.length < 12) {
+    throw new Error("BOOTSTRAP_PATIENT_PASSWORD must be at least 12 characters");
+  }
+  if (!name) throw new Error("BOOTSTRAP_PATIENT_NAME must not be empty");
+  if (!Number.isInteger(age) || age < 1 || age > 120) {
+    throw new Error("BOOTSTRAP_PATIENT_AGE must be between 1 and 120");
+  }
+  if (!["male", "female"].includes(gender)) {
+    throw new Error('BOOTSTRAP_PATIENT_GENDER must be "male" or "female"');
+  }
+
+  let user = await User.findOne({ email });
+  if (user && user.role !== "patient") {
+    throw new Error("BOOTSTRAP_PATIENT_EMAIL belongs to a non-patient account");
+  }
+  if (!user) {
+    user = await User.create({
+      name,
+      email,
+      password: await bcrypt.hash(password, 12),
+      role: "patient",
+    });
+    console.log(`Bootstrap patient account created for ${email}`);
+  } else if (!user.password) {
+    user.password = await bcrypt.hash(password, 12);
+    await user.save();
+    console.log(`Password sign-in enabled for bootstrap patient ${email}`);
+  }
+
+  const profile = await Patient.findOne({ user: user._id });
+  if (!profile) {
+    await Patient.create({
+      name: user.name,
+      age,
+      gender,
+      phone,
+      address,
+      user: user._id,
+    });
+    console.log(`Bootstrap patient profile created for ${email}`);
+  }
+}
+
 async function initialize() {
   const { inMemory } = await connectDatabase();
   if (inMemory) await ensureDevelopmentUsers();
   await ensureAdmin();
+  await ensureBootstrapPatient();
 }
 
 module.exports = { app, initialize };
