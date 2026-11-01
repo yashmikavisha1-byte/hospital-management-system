@@ -5,7 +5,7 @@ const bcrypt = require("bcryptjs");
 const { connectDatabase } = require("./db");
 const { ensureDevelopmentUsers } = require("./seedUsers");
 const User = require("./models/User");
-const Patient = require("./modenpm run devls/Patient");
+const Patient = require("./models/Patient");
 
 const app = express();
 
