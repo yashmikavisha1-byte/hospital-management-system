@@ -91,6 +91,8 @@ export default function ManagementPage({ page }) {
   const [appointments, setAppointments] = useState([]);
   const [bills, setBills] = useState([]);
   const [labReports, setLabReports] = useState([]);
+  const [medicines, setMedicines] = useState([]);
+  const [wards, setWards] = useState([]);
   const [recordPatient, setRecordPatient] = useState("");
   const [record, setRecord] = useState(null);
   const [search, setSearch] = useState("");
@@ -173,6 +175,14 @@ export default function ManagementPage({ page }) {
             }
             break;
           }
+          case "medicines":
+            response = await api.get("/medicines");
+            if (active) setMedicines(response.data);
+            break;
+          case "wards":
+            response = await api.get("/wards");
+            if (active) setWards(response.data);
+            break;
           default:
             break;
         }
@@ -191,10 +201,12 @@ export default function ManagementPage({ page }) {
     const data = page === "patients" || page === "records" ? patients
       : page === "doctors" ? doctors
         : page === "appointments" ? appointments
-          : page === "lab" ? labReports : bills;
+          : page === "lab" ? labReports
+            : page === "medicines" ? medicines
+              : page === "wards" ? wards : bills;
     if (!query) return data;
     return data.filter((item) => JSON.stringify(item).toLowerCase().includes(query));
-  }, [appointments, bills, doctors, labReports, page, patients, search]);
+  }, [appointments, bills, doctors, labReports, medicines, wards, page, patients, search]);
 
   async function submit(event) {
     event.preventDefault();
@@ -250,6 +262,27 @@ export default function ManagementPage({ page }) {
         });
         setLabReports((current) => [data, ...current]);
         setSuccess("Lab report added.");
+      } else if (page === "medicines") {
+        await api.post("/medicines", {
+          name: values.name,
+          category: values.category,
+          quantity: Number(values.quantity),
+          price: Number(values.price),
+          expiryDate: values.expiryDate,
+          reorderLevel: Number(values.reorderLevel || 10),
+        });
+        const { data } = await api.get("/medicines");
+        setMedicines(data);
+        setSuccess("Medicine added.");
+      } else if (page === "wards") {
+        await api.post("/wards", {
+          name: values.name,
+          type: values.type,
+          bedCount: Number(values.bedCount),
+        });
+        const { data } = await api.get("/wards");
+        setWards(data);
+        setSuccess("Ward created.");
       } else if (page === "bills") {
         const { data } = await api.post("/bills", {
           patientId: values.patientId,
@@ -338,6 +371,8 @@ export default function ManagementPage({ page }) {
   const canCreateAppointment = ["admin", "receptionist", "patient"].includes(user.role);
   const canCreateBill = ["admin", "receptionist"].includes(user.role);
   const canCreateLab = ["admin", "doctor", "receptionist"].includes(user.role);
+  const canManageMedicines = user.role === "admin";
+  const canManageWards = user.role === "admin";
   const canAddRecord = ["admin", "doctor"].includes(user.role);
 
   const patientColumns = [
@@ -374,6 +409,19 @@ export default function ManagementPage({ page }) {
     { label: "Result", render: (row) => row.result || "—" },
     { label: "Ordered by", render: (row) => row.orderedBy || "—" },
     { label: "Status", render: (row) => <span className={`state-pill state-${row.status}`}>{row.status}</span> },
+  ];
+  const medicineColumns = [
+    { label: "Medicine", render: (row) => <div className="table-person"><strong>{row.name}</strong><small>{row.category || "—"}</small></div> },
+    { label: "Stock", render: (row) => <span className={`state-pill ${row.quantity <= (row.reorderLevel ?? 10) ? "state-cancelled" : "state-completed"}`}>{row.quantity}</span> },
+    { label: "Price", render: (row) => `Rs. ${(row.price || 0).toLocaleString()}` },
+    { label: "Expiry", render: (row) => row.expiryDate || "—" },
+    { label: "Reorder level", render: (row) => row.reorderLevel ?? "—" },
+  ];
+  const wardColumns = [
+    { label: "Ward", render: (row) => <div className="table-person"><strong>{row.name}</strong><small>{row.type}</small></div> },
+    { label: "Total beds", render: (row) => row.totalBeds },
+    { label: "Available", render: (row) => row.availableBeds },
+    { label: "Occupied", render: (row) => row.occupiedBeds },
   ];
 
   function handleDownloadPdf() {
@@ -418,6 +466,16 @@ export default function ManagementPage({ page }) {
           r.status,
         ]),
       },
+      medicines: {
+        title: "Pharmacy Stock",
+        columns: ["Medicine", "Category", "Stock", "Price", "Expiry", "Reorder level"],
+        rows: filtered.map((r) => [r.name, r.category || "-", r.quantity, `Rs. ${(r.price || 0).toLocaleString()}`, r.expiryDate || "-", r.reorderLevel ?? "-"]),
+      },
+      wards: {
+        title: "Wards",
+        columns: ["Ward", "Type", "Total beds", "Available", "Occupied"],
+        rows: filtered.map((r) => [r.name, r.type, r.totalBeds, r.availableBeds, r.occupiedBeds]),
+      },
     };
     const config = configs[page];
     if (!config) return;
@@ -432,7 +490,7 @@ export default function ManagementPage({ page }) {
           <h1>{title}</h1>
           <p className="page-description">Manage {title.toLowerCase()} and keep your hospital organized.</p>
         </div>
-        {["patients", "doctors", "appointments", "bills", "lab"].includes(page) && (
+        {["patients", "doctors", "appointments", "bills", "lab", "medicines", "wards"].includes(page) && (
           <button className="primary-action" type="button" onClick={handleDownloadPdf} disabled={loading}>
             Download PDF
           </button>
@@ -535,11 +593,36 @@ export default function ManagementPage({ page }) {
         </section>
       </>}
 
-      {["medicines", "wards"].includes(page) && (
-        <section className="management-card">
-          <div className="feature-placeholder"><span aria-hidden="true">{page === "medicines" ? "✚" : "▦"}</span><h2>{title} workspace</h2><p>This section needs a backend module before it can display or save real {title.toLowerCase()} data. Other connected pages are available from the menu.</p></div>
+      {page === "medicines" && <>
+        {canManageMedicines && <section className="management-card"><div className="section-heading"><div><h2>Add a medicine</h2><p>Add a new medicine to the pharmacy stock.</p></div></div>
+          <form className="management-form" onSubmit={submit}>
+            <Field label="Medicine name" name="name" />
+            <Field label="Category" name="category" required={false} placeholder="For example, Antibiotic" />
+            <Field label="Quantity" name="quantity" type="number" min="0" />
+            <Field label="Price per unit (Rs.)" name="price" type="number" min="0" step="0.01" />
+            <Field label="Expiry date" name="expiryDate" type="date" required={false} />
+            <Field label="Reorder level" name="reorderLevel" type="number" min="0" required={false} placeholder="10" />
+            <button className="primary-action" disabled={saving} type="submit">{saving ? "Saving…" : "Add medicine"}</button>
+          </form>
+        </section>}
+        <section className="management-card"><div className="section-heading"><div><h2>Medicine stock</h2><p>{loading ? "Loading medicines…" : `${medicines.length} medicine${medicines.length === 1 ? "" : "s"}`}</p></div><input aria-label="Search medicines" className="table-search" onChange={(event) => setSearch(event.target.value)} placeholder="Search medicines" value={search} /></div>
+          {loading ? <EmptyState>Loading medicines…</EmptyState> : <Table columns={medicineColumns} rows={filtered} empty="No medicines found." />}
         </section>
-      )}
+      </>}
+
+      {page === "wards" && <>
+        {canManageWards && <section className="management-card"><div className="section-heading"><div><h2>Create a ward</h2><p>Beds are numbered automatically.</p></div></div>
+          <form className="management-form" onSubmit={submit}>
+            <Field label="Ward name" name="name" />
+            <Field label="Type" name="type"><select defaultValue="general" name="type"><option value="general">General</option><option value="icu">ICU</option><option value="private">Private</option><option value="maternity">Maternity</option></select></Field>
+            <Field label="Number of beds" name="bedCount" type="number" min="1" />
+            <button className="primary-action" disabled={saving} type="submit">{saving ? "Saving…" : "Create ward"}</button>
+          </form>
+        </section>}
+        <section className="management-card"><div className="section-heading"><div><h2>Ward overview</h2><p>{loading ? "Loading wards…" : `${wards.length} ward${wards.length === 1 ? "" : "s"}`}</p></div><input aria-label="Search wards" className="table-search" onChange={(event) => setSearch(event.target.value)} placeholder="Search wards" value={search} /></div>
+          {loading ? <EmptyState>Loading wards…</EmptyState> : <Table columns={wardColumns} rows={filtered} empty="No wards found." />}
+        </section>
+      </>}
     </div>
   );
 }
