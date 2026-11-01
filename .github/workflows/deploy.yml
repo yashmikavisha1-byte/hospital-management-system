@@ -1,0 +1,72 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+        working-directory: client
+      - name: Validate API URL
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "::error::VITE_API_URL is empty."
+            exit 1
+          fi
+          case "$VITE_API_URL" in
+            https://*/api) ;;
+            https://*) VITE_API_URL="${VITE_API_URL%/}/api" ;;
+            *)
+              echo "::error::VITE_API_URL must be an HTTPS URL, optionally ending in /api."
+              exit 1
+              ;;
+          esac
+
+          echo "VITE_API_URL=$VITE_API_URL" >> "$GITHUB_ENV"
+      - name: Validate Google OAuth client ID
+        run: |
+          if [ -z "$VITE_GOOGLE_CLIENT_ID" ]; then
+            echo "::warning::VITE_GOOGLE_CLIENT_ID is not configured; Google sign-in remains disabled until you add the OAuth client ID."
+            exit 0
+          fi
+          if [[ "$VITE_GOOGLE_CLIENT_ID" != *.apps.googleusercontent.com ]]; then
+            echo "::error::VITE_GOOGLE_CLIENT_ID must be a valid Google OAuth Web client ID ending in .apps.googleusercontent.com."
+            exit 1
+          fi
+      - run: npm run build
+        working-directory: client
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: client/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
