@@ -11,7 +11,7 @@ const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0"
 const currentTime = now.toTimeString().slice(0, 5);
 
 function formatCurrency(amount) {
-  return `₹${amount.toLocaleString("en-IN")}`;
+  return `RS${amount.toLocaleString("en-IN")}`;
 }
 
 function getErrorMessage(error, fallback) {
@@ -124,7 +124,7 @@ function getShortcuts(role) {
     return [
       ["/appointments", "◷", "My appointments", "Book or review your visits"],
       ["/records", "▤", "My records", "View your medical records"],
-      ["/bills", "₹", "My bills", "Review your billing and payments"],
+      ["/bills", "RS", "My bills", "Review your billing and payments"],
     ];
   }
 
@@ -132,7 +132,7 @@ function getShortcuts(role) {
     return [
       ["/patients", "+", "Patient directory", "Find and manage patient profiles"],
       ["/appointments", "◷", "Appointments", "Review schedules and visit status"],
-      ["/bills", "₹", "Billing center", "View balances and payment records"],
+      ["/bills", "RS", "Billing center", "View balances and payment records"],
     ];
   }
 
